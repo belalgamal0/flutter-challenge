@@ -8,12 +8,22 @@ import 'package:file_picker/file_picker.dart';
 import '../model/transscript_model.dart';
 import 'audio_events.dart';
 import 'audio_states.dart';
+class InterleavedPhrase {
+  final String speakerName;
+  final String words;
+  final int time;
 
+  InterleavedPhrase({
+    required this.speakerName,
+    required this.words,
+    required this.time,
+  });
+}
 class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   final AudioPlayer audioPlayer = AudioPlayer();
   Uint8List? audio;
   TransscriptModel? transscriptModel;
-  List<Phrase>? interleavePhrases;
+  List<InterleavedPhrase>? interleavePhrases;
   AudioPlayerBloc() : super(InitialState()) {
     on<PickAudioFile>(_pickAudio);
     on<PickJsonFile>(_pickTransscript);
@@ -105,23 +115,41 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   int activeIndex = 0;
   bool isPause = false;
   bool isPlaying = false;
+List<InterleavedPhrase> interleavePhrasesAction(TransscriptModel model) {
+  List<InterleavedPhrase> interleavedPhrases = [];
+  List<Speaker> speakers = model.speakers;
+  int maxLength = speakers.map((s) => s.phrases.length).reduce((a, b) => a > b ? a : b);
 
-  List<Phrase> interleavePhrasesAction(TransscriptModel model) {
-    List<Phrase> interleavedPhrases = [];
-    List<Speaker> speakers = model.speakers;
-    int maxLength =
-        speakers.map((s) => s.phrases.length).reduce((a, b) => a > b ? a : b);
-
-    for (int i = 0; i < maxLength; i++) {
-      for (var speaker in speakers) {
-        if (i < speaker.phrases.length) {
-          interleavedPhrases.add(speaker.phrases[i]);
-        }
+  for (int i = 0; i < maxLength; i++) {
+    for (var speaker in speakers) {
+      if (i < speaker.phrases.length) {
+        interleavedPhrases.add(InterleavedPhrase(
+          speakerName: speaker.name,
+          words: speaker.phrases[i].words,
+          time: speaker.phrases[i].time,
+        ));
       }
     }
-
-    return interleavedPhrases;
   }
+
+  return interleavedPhrases;
+}
+  // List<Phrase> interleavePhrasesAction(TransscriptModel model) {
+  //   List<Phrase> interleavedPhrases = [];
+  //   List<Speaker> speakers = model.speakers;
+  //   int maxLength =
+  //       speakers.map((s) => s.phrases.length).reduce((a, b) => a > b ? a : b);
+
+  //   for (int i = 0; i < maxLength; i++) {
+  //     for (var speaker in speakers) {
+  //       if (i < speaker.phrases.length) {
+  //         interleavedPhrases.add(speaker.phrases[i]);
+  //       }
+  //     }
+  //   }
+
+  //   return interleavedPhrases;
+  // }
 
   int remainingTime = 0;
 

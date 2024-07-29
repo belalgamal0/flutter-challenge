@@ -2,11 +2,12 @@
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import '../bloc/audio_bloc.dart';
 import '../model/transscript_model.dart';
 
 class AudioPlayerWidget extends StatefulWidget {
   final Uint8List sound;
-  final List<Phrase>? interleavePhrases;
+  final List<InterleavedPhrase>? interleavePhrases;
   final int pauseTime;
 
   AudioPlayerWidget({required this.sound,required this.interleavePhrases,required this.pauseTime});
@@ -16,33 +17,52 @@ class AudioPlayerWidget extends StatefulWidget {
 }
 
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
+
   AudioPlayer audioPlayer = AudioPlayer();
   Duration pausePosition = Duration.zero;
   int activeIndex = -1;
   late int pauseDuration;
   bool isPlaying = false;
   late List<int> times;
-  late List<String> sen;
+  late List<String> phrases;
+  late List<String> speakers;
+
+  Duration currentPosition = Duration.zero;
+  Duration totalDuration = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    pauseDuration=widget.pauseTime;
-    sen = widget.interleavePhrases!.map((e) => e.words).toList();
-    times = widget.interleavePhrases!.map((e) => e.time).toList();
+    pauseDuration = widget.pauseTime;
+
+    // Interleave phrases and speakers
+    var interleavedPhrases = widget.interleavePhrases!;
+    phrases = interleavedPhrases.map((e) => e.words).toList();
+    times = interleavedPhrases.map((e) => e.time).toList();
+    speakers = interleavedPhrases.map((e) => e.speakerName).toList();
 
     audioPlayer.onPlayerComplete.listen((event) {
       setState(() {
         isPlaying = false;
         pausePosition = Duration.zero;
         activeIndex = -1;
+        currentPosition = Duration.zero;
       });
     });
 
     audioPlayer.onPositionChanged.listen((Duration currentPosition) {
+      setState(() {
+        this.currentPosition = currentPosition;
+      });
       if (isPlaying) {
         _updateActiveIndex(currentPosition);
       }
+    });
+
+    audioPlayer.onDurationChanged.listen((Duration totalDuration) {
+      setState(() {
+        this.totalDuration = totalDuration;
+      });
     });
   }
 
@@ -117,8 +137,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           isPlaying = true;
         });
       });
-    } else {
-    }
+    } else {}
   }
 
   void _forwardAudio() {
@@ -130,18 +149,26 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           isPlaying = true;
         });
       });
-    } else {
-    }
+    } else {}
   }
 
   int sumTillIndex(List<int> list, int index) {
     if (index < 0 || index >= list.length) {
       throw ArgumentError('Index out of range');
     }
-    return list
-        .sublist(0, index)
-        .fold(0, (previous, element) => previous + element);
+    return list.sublist(0, index).fold(0, (previous, element) => previous + element);
   }
+
+String _formatDuration(Duration duration) {
+  String twoDigits(int n) => n.toString().padLeft(2, '0');
+  String threeDigits(int n) => n.toString().padLeft(3, '0');
+  
+  String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+  String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+  String threeDigitMilliseconds = threeDigits(duration.inMilliseconds.remainder(1000));
+
+  return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds.$threeDigitMilliseconds";
+}
 
 
   @override
@@ -156,6 +183,31 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const SizedBox(height: 20),
+        Container(padding: EdgeInsets.symmetric(vertical: 10),width: 450,decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade600),borderRadius: BorderRadius.circular(16)),child: Column(children: [
+      SizedBox(width: 400,
+          child: Slider(activeColor: Color.fromARGB(255, 38, 218, 113),
+            value: currentPosition.inMilliseconds.toDouble(),
+            min: 0.0,
+            max: totalDuration.inMilliseconds.toDouble(),
+            onChanged: (double value) {
+              // setState(() {
+              //   currentPosition = Duration(seconds: value.toInt());
+              // });
+              // audioPlayer.seek(currentPosition);
+            },
+          ),
+        ),
+        SizedBox(width: 400,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(_formatDuration(currentPosition)),
+              Text(_formatDuration(totalDuration)),
+            ],
+          ),
+        ),
+                   const SizedBox(height: 30),
+
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -177,20 +229,22 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             ),
           ],
         ),
+        ],),),
+  
         const SizedBox(
           height: 30,
         ),
-        Column(
+        Column(crossAxisAlignment: CrossAxisAlignment.start,
           children: List.generate(
-            sen.length,
+            widget.interleavePhrases!.length,
             (index) => Container(
               margin: const EdgeInsets.only(bottom: 10),
               color: activeIndex == index
-                  ? Colors.orangeAccent
+                  ? Color.fromARGB(255, 38, 218, 113)
                   : Colors.grey.shade200,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              child: Text(
-                sen[index],
+              child: Text(widget.interleavePhrases![index].speakerName +":  "+
+                widget.interleavePhrases![index].words,
                 style: TextStyle(
                   color: activeIndex == index ? Colors.white : Colors.black,
                 ),
