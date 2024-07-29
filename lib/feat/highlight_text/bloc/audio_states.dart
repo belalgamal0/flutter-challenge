@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import '../../../transscript_model.dart';
+import '../model/transscript_model.dart';
 
 abstract class AudioPlayerState {}
 

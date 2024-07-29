@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:bloc/bloc.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../../transscript_model.dart';
+import '../model/transscript_model.dart';
 import 'audio_events.dart';
 import 'audio_states.dart';
 

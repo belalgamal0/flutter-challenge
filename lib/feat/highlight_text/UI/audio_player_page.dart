@@ -2,7 +2,7 @@
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import '../../../transscript_model.dart';
+import '../model/transscript_model.dart';
 
 class AudioPlayerWidget extends StatefulWidget {
   final Uint8List sound;
