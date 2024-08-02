@@ -9,6 +9,8 @@ class PrepareAction extends AudioPlayerEvent {}
 class PlayAction extends AudioPlayerEvent {}
 class AnimateAction extends AudioPlayerEvent {}
 class PauseAction extends AudioPlayerEvent {}
+class ForwardAction extends AudioPlayerEvent {}
+class RewindAction extends AudioPlayerEvent {}
 
 class PlayPause extends AudioPlayerEvent {
   Uint8List soundBytes;

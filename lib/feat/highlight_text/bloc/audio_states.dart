@@ -27,8 +27,12 @@ class AudioFileLoaded extends AudioPlayerState {
 }
 
 class PlayingState extends AudioPlayerState {}
+class ForwardingState extends AudioPlayerState {}
+class RewindingState extends AudioPlayerState {}
+class PlayingSuccessState extends AudioPlayerState {}
 
 class PausedState extends AudioPlayerState {}
+class PausingState extends AudioPlayerState {}
 class HighlightingState extends AudioPlayerState {}
 
 class HighlightState extends AudioPlayerState {
